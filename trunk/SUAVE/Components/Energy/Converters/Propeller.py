@@ -35,6 +35,7 @@ class Propeller(Energy_Component):
         self.prop_attributes.chord_distribution = 0.0
         self.prop_attributes.mid_chord_aligment = 0.0
         self.thrust_angle                       = 0.0
+        self.coaxial                            = False
         
     def spin(self,conditions):
         """ Analyzes a propeller given geometry and operating conditions
@@ -224,8 +225,12 @@ class Propeller(Energy_Component):
         deltar   = (r[1]-r[0])
         thrust   = rho*B*(np.sum(Gamma*(Wt-epsilon*Wa)*deltar,axis=1)[:,None])
         torque   = rho*B*np.sum(Gamma*(Wa+epsilon*Wt)*r*deltar,axis=1)[:,None]
-        power    = torque*omega       
-       
+        power    = torque*omega      
+        ind_pow  = omega*rho*B*np.sum(Gamma*(Wa)*r*deltar,axis=1)[:,None]
+        
+        if self.coaxial == True:
+            power = power + ind_pow*0.08 #8% correction factor for coaxial
+        
         D        = 2*R
         Cp       = power/(rho*(n*n*n)*(D*D*D*D*D))
 
@@ -252,6 +257,7 @@ class Propeller(Energy_Component):
             velocity           = V,
             thrust             = thrust,
             power              = power,
+            induced_power      = ind_pow,
             mid_chord_aligment = self.prop_attributes.mid_chord_aligment
         )
         
